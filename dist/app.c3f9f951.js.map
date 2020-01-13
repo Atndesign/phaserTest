@@ -1,0 +1,1 @@
+{"version":3,"sources":["js/app.js"],"names":["game","Phaser","Game","width","height"],"mappings":"AAAA,IAAIA,IAAI,GAAG,IAAIC,MAAM,CAACC,IAAX,CAAgB;AACvBC,EAAAA,KAAK,EAAE,GADgB;AAEvBC,EAAAA,MAAM,EAAC;AAFgB,CAAhB,CAAX","file":"app.c3f9f951.js","sourceRoot":"..","sourcesContent":["let game = new Phaser.Game({\r\n    width: 100,\r\n    height:100,\r\n})"]}
