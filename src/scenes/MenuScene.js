@@ -6,8 +6,17 @@ export class MenuScene extends Phaser.Scene{
             key: CST.SCENE.MENU
         })
     }
+   
     create()
     {
-        this.text = this.add.text (0,0,"Hello I'm a menu 2")
+        this.add.image(0,0, "background").setOrigin(0)
+        this.add.image(this.game.renderer.width / 2,50, "title")
+        this.add.image(this.game.renderer.width / 1.5, this.game.renderer.height * .80, "settings")
+        let playBtn = this.add.image(this.game.renderer.width/ 3, this.game.renderer.height * .80, "play")
+
+        playBtn.setInteractive();
+        playBtn.on('pointerover',()=>{
+            console.log("Play")
+        })
     }
 }
