@@ -16,7 +16,7 @@ export class MenuScene extends Phaser.Scene{
 
         playBtn.setInteractive();
         playBtn.on('pointerover',()=>{
-            console.log("Play")
+            this.scene.start(CST.SCENE.PLAY)
         })
     }
 }
