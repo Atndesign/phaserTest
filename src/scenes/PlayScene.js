@@ -1,5 +1,6 @@
 import { CST } from "../CST";
 import { InputManagerBind } from "../../helpers/inputManager";
+import { game } from "../main"
 
 export class PlayScene extends Phaser.Scene{
     constructor(){
@@ -11,10 +12,9 @@ export class PlayScene extends Phaser.Scene{
     }
     preload()
     {
-        this.map = this.make.tilemap({ key: 'map', tileWidth: 16, tileHeight: 16 });
-        this.tileset = map.addTilesetImage('tiles_red');
-        this.layer = map.createDynamicLayer(0, tileset, 0, 0);
-        this.layer.setScale(2);
+        this.load.image("terrain", "./assets/tilesetMap.png");
+        this.load.tilemapTiledJSON("map", "./assets/map.json");
+
         this.textures.spritesheet = this.load.spritesheet("reaper", "/assets/img/game/player.png" ,{frameWidth: 16, frameHeight: 16})
         this.textures.spritesheet = this.load.spritesheet("boomSlime", "/assets/img/game/enemies/slimes/boomSlime.png" ,{frameWidth: 16, frameHeight: 16})
         this.keyboard = this.input.keyboard.addKeys("Z,Q,S,D");
@@ -22,26 +22,27 @@ export class PlayScene extends Phaser.Scene{
     }
     create()
     {
-        this.reaper = new Player(this, 250, 50, "reaper")
+        this.reaper = new Player(this, 250, 300, "reaper")
         this.boomSlime = new Slime(this, 10, 50, "boomSlime", this.reaper, 40)
         this.physicsGroup = this.physics.add.group({
             // Initial angular speed of 60 degrees per second.
             // Drag reduces it by 5 degrees/s per second, thus to zero after 12 seconds.
             angularDrag: 5,
-            bounceX: 1,
-            bounceY: 1,
             collideWorldBounds: true,
-            dragX: 60,
+            dragX: 150,
             dragY: 60,
         });
         this.physicsGroup.add(this.reaper)
-        
-        
+        // Map from tiled
+        this.map = this.add.tilemap("map");
+        this.terrain = this.map.addTilesetImage("tilesetMap", "terrain")
+        this.layer = this.map.createStaticLayer("terrainMaybe", [this.terrain], 0,0).setDepth(-1)
+        this.physics.add.collider(this.reaper, this.layer)
+        this.layer.setCollisionByProperty({collides:true})
     }
     update()
     {
         this.InputManagerBind.handleUpdate(this.reaper)
-        
     }
 }
 
