@@ -272,6 +272,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.InputManagerBind = void 0;
 
+var _main = require("../src/main");
+
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -290,7 +292,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-var DIRECTION_VELOCITY = 10;
+var TILE_SIZE = 16;
+var DIRECTION_VELOCITY = 2 * TILE_SIZE;
 
 var InputManagerBind =
 /*#__PURE__*/
@@ -305,8 +308,8 @@ function (_Phaser$Input$InputMa) {
     _this = _possibleConstructorReturn(this, _getPrototypeOf(InputManagerBind).call(this, game, keyboard));
     _this.keyboard = keyboard;
     _this.keys = [{
-      name: "Z",
-      value: keyboard.Z,
+      name: "W",
+      value: keyboard.W,
       velocityX: 0,
       velocityY: -DIRECTION_VELOCITY
     }, {
@@ -320,8 +323,8 @@ function (_Phaser$Input$InputMa) {
       velocityX: DIRECTION_VELOCITY,
       velocityY: 0
     }, {
-      name: "Q",
-      value: keyboard.Q,
+      name: "A",
+      value: keyboard.A,
       velocityX: -DIRECTION_VELOCITY,
       velocityY: 0
     }];
@@ -339,6 +342,28 @@ function (_Phaser$Input$InputMa) {
             var name = _ref.name;
             return name === key;
           });
+
+          switch (_this2.currentKey.name) {
+            case "W":
+              player.play("walkUp", true);
+              break;
+
+            case "A":
+              player.play("walkLeft", true);
+              break;
+
+            case "S":
+              player.play("walkDown", true);
+              break;
+
+            case "D":
+              player.play("walkRight", true);
+              break;
+
+            default:
+              break;
+          }
+
           player.updatePlayerPos(_this2.currentKey.velocityX, _this2.currentKey.velocityY);
         }
       });
@@ -354,7 +379,7 @@ function (_Phaser$Input$InputMa) {
 }(Phaser.Input.InputManager);
 
 exports.InputManagerBind = InputManagerBind;
-},{}],"src/scenes/PlayScene.js":[function(require,module,exports) {
+},{"../src/main":"src/main.js"}],"src/scenes/PlayScene.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -365,8 +390,6 @@ exports.PlayScene = void 0;
 var _CST = require("../CST");
 
 var _inputManager = require("../../helpers/inputManager");
-
-var _main = require("../main");
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -392,16 +415,11 @@ function (_Phaser$Scene) {
   _inherits(PlayScene, _Phaser$Scene);
 
   function PlayScene() {
-    var _this;
-
     _classCallCheck(this, PlayScene);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayScene).call(this, {
+    return _possibleConstructorReturn(this, _getPrototypeOf(PlayScene).call(this, {
       key: _CST.CST.SCENE.PLAY
     }));
-    _this.lol = 40;
-    console.log(_this.lol);
-    return _this;
   }
 
   _createClass(PlayScene, [{
@@ -409,22 +427,22 @@ function (_Phaser$Scene) {
     value: function preload() {
       this.load.image("terrain", "./assets/tilesetMap.png");
       this.load.tilemapTiledJSON("map", "./assets/map.json");
-      this.textures.spritesheet = this.load.spritesheet("reaper", "/assets/img/game/player.png", {
+      this.textures.spritesheet = this.load.spritesheet("reaper", "./assets/img/game/player.png", {
         frameWidth: 16,
         frameHeight: 16
       });
-      this.textures.spritesheet = this.load.spritesheet("boomSlime", "/assets/img/game/enemies/slimes/boomSlime.png", {
+      this.textures.spritesheet = this.load.spritesheet("boomSlime", "./assets/img/game/enemies/slimes/boomSlime.png", {
         frameWidth: 16,
         frameHeight: 16
       });
-      this.keyboard = this.input.keyboard.addKeys("Z,Q,S,D");
+      this.keyboard = this.input.keyboard.addKeys("W,A,S,D");
       this.InputManagerBind = new _inputManager.InputManagerBind(this, this.keyboard);
     }
   }, {
     key: "create",
     value: function create() {
-      this.reaper = new Player(this, 250, 300, "reaper");
-      this.boomSlime = new Slime(this, 10, 50, "boomSlime", this.reaper, 40);
+      this.reaper = new Player(this, 250, 300, "reaper", this); // this.boomSlime = new Slime(this, 10, 50, "boomSlime", this.reaper, 40)
+
       this.physicsGroup = this.physics.add.group({
         // Initial angular speed of 60 degrees per second.
         // Drag reduces it by 5 degrees/s per second, thus to zero after 12 seconds.
@@ -461,38 +479,70 @@ function (_Phaser$Physics$Arcad) {
   _inherits(Player, _Phaser$Physics$Arcad);
 
   function Player(scene) {
-    var _this2;
+    var _this;
 
     var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
     var texture = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'dude';
+    var currentScene = arguments.length > 4 ? arguments[4] : undefined;
 
     _classCallCheck(this, Player);
 
-    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, scene, x, y, texture));
-    _this2.velocity = {
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, scene, x, y, texture));
+    _this.velocity = {
       x: 0,
       y: 0
     };
-    scene.add.existing(_assertThisInitialized(_this2));
-    scene.physics.add.existing(_assertThisInitialized(_this2));
-    scene.events.on('update', _this2.update, _assertThisInitialized(_this2));
-    return _this2;
+    _this.texture = texture;
+    _this.currentScene = currentScene;
+    scene.add.existing(_assertThisInitialized(_this));
+    scene.physics.add.existing(_assertThisInitialized(_this));
+    scene.events.on('create', _this.create, _assertThisInitialized(_this));
+    scene.events.on('update', _this.update, _assertThisInitialized(_this));
+    return _this;
   }
 
   _createClass(Player, [{
     key: "create",
     value: function create() {
-      this.anims.create({
-        key: "walk",
+      // Set Player's animations
+      this.currentScene.anims.create({
+        key: "walkDown",
         frameRate: 5,
-        repeat: -1,
-        frames: this.anims.generateFrameNumbers(texture, {
+        // repeat: -1,
+        frames: this.currentScene.anims.generateFrameNumbers("reaper", {
           start: 0,
           end: 0
         })
       });
-      this.reaper = this.add.sprite(100, 100, texture);
+      this.currentScene.anims.create({
+        key: "walkUp",
+        frameRate: 5,
+        // repeat: -1,
+        frames: this.currentScene.anims.generateFrameNumbers("reaper", {
+          start: 1,
+          end: 1
+        })
+      });
+      this.currentScene.anims.create({
+        key: "walkLeft",
+        frameRate: 5,
+        // repeat: -1,
+        frames: this.currentScene.anims.generateFrameNumbers("reaper", {
+          start: 2,
+          end: 2
+        })
+      });
+      this.currentScene.anims.create({
+        key: "walkRight",
+        frameRate: 5,
+        // repeat: -1,
+        frames: this.currentScene.anims.generateFrameNumbers("reaper", {
+          start: 3,
+          end: 3
+        })
+      });
+      this.setScale(2);
     }
   }, {
     key: "update",
@@ -500,8 +550,8 @@ function (_Phaser$Physics$Arcad) {
   }, {
     key: "updatePlayerPos",
     value: function updatePlayerPos(velocityX, velocityY) {
-      this.velocity.x = this.velocity.x + velocityX;
-      this.velocity.y = this.velocity.y + velocityY;
+      this.velocity.x = velocityX;
+      this.velocity.y = velocityY;
       this.setVelocity(this.velocity.x, this.velocity.y);
     }
   }]);
@@ -515,7 +565,7 @@ function (_Phaser$Physics$Arcad2) {
   _inherits(Slime, _Phaser$Physics$Arcad2);
 
   function Slime(scene) {
-    var _this3;
+    var _this2;
 
     var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
@@ -525,13 +575,13 @@ function (_Phaser$Physics$Arcad2) {
 
     _classCallCheck(this, Slime);
 
-    _this3 = _possibleConstructorReturn(this, _getPrototypeOf(Slime).call(this, scene, x, y, texture, target, speed));
-    _this3.target = target;
-    _this3.speed = speed;
-    scene.add.existing(_assertThisInitialized(_this3));
-    scene.physics.add.existing(_assertThisInitialized(_this3));
-    scene.events.on('update', _this3.update, _assertThisInitialized(_this3));
-    return _this3;
+    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(Slime).call(this, scene, x, y, texture, target, speed));
+    _this2.target = target;
+    _this2.speed = speed;
+    scene.add.existing(_assertThisInitialized(_this2));
+    scene.physics.add.existing(_assertThisInitialized(_this2));
+    scene.events.on('update', _this2.update, _assertThisInitialized(_this2));
+    return _this2;
   }
 
   _createClass(Slime, [{
@@ -555,7 +605,7 @@ function (_Phaser$Physics$Arcad2) {
 
   return Slime;
 }(Phaser.Physics.Arcade.Sprite);
-},{"../CST":"src/CST.js","../../helpers/inputManager":"helpers/inputManager.js","../main":"src/main.js"}],"src/main.js":[function(require,module,exports) {
+},{"../CST":"src/CST.js","../../helpers/inputManager":"helpers/inputManager.js"}],"src/main.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -579,7 +629,7 @@ var game = new Phaser.Game({
   physics: {
     default: "arcade",
     arcade: {
-      debug: true
+      debug: false
     }
   }
 });
@@ -612,7 +662,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "23074" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57802" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
