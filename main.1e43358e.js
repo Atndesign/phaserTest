@@ -333,40 +333,71 @@ function (_Phaser$Input$InputMa) {
 
   _createClass(InputManagerBind, [{
     key: "handleUpdate",
-    value: function handleUpdate(player) {
+    value: function handleUpdate(player, mobileControls) {
       var _this2 = this;
 
-      Object.keys(this.keyboard).forEach(function (key) {
-        if (_this2.keyboard[key].isDown) {
-          _this2.currentKey = _this2.keys.find(function (_ref) {
-            var name = _ref.name;
-            return name === key;
-          });
+      var control = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-          switch (_this2.currentKey.name) {
-            case "W":
-              player.play("walkUp", true);
-              break;
+      if (mobileControls) {
+        switch (control) {
+          case "top":
+            this.currentKey = this.keys[0];
+            player.play("walkUp", true);
+            break;
 
-            case "A":
-              player.play("walkLeft", true);
-              break;
+          case "down":
+            this.currentKey = this.keys[1];
+            player.play("walkDown", true);
+            break;
 
-            case "S":
-              player.play("walkDown", true);
-              break;
+          case "left":
+            this.currentKey = this.keys[3];
+            player.play("walkLeft", true);
+            break;
 
-            case "D":
-              player.play("walkRight", true);
-              break;
+          case "right":
+            this.currentKey = this.keys[2];
+            player.play("walkRight", true);
+            break;
 
-            default:
-              break;
-          }
-
-          player.updatePlayerPos(_this2.currentKey.velocityX, _this2.currentKey.velocityY);
+          default:
+            break;
         }
-      });
+
+        player.updatePlayerPos(this.currentKey.velocityX, this.currentKey.velocityY);
+      } else {
+        Object.keys(this.keyboard).forEach(function (key) {
+          if (_this2.keyboard[key].isDown) {
+            _this2.currentKey = _this2.keys.find(function (_ref) {
+              var name = _ref.name;
+              return name === key;
+            });
+
+            switch (_this2.currentKey.name) {
+              case "W":
+                player.play("walkUp", true);
+                break;
+
+              case "A":
+                player.play("walkLeft", true);
+                break;
+
+              case "S":
+                player.play("walkDown", true);
+                break;
+
+              case "D":
+                player.play("walkRight", true);
+                break;
+
+              default:
+                break;
+            }
+
+            player.updatePlayerPos(_this2.currentKey.velocityX, _this2.currentKey.velocityY);
+          }
+        });
+      }
     }
   }, {
     key: "getKeys",
@@ -425,6 +456,10 @@ function (_Phaser$Scene) {
   _createClass(PlayScene, [{
     key: "preload",
     value: function preload() {
+      this.load.image("leftBtn", "./assets/img/game/controls/leftCtrl.png");
+      this.load.image("rightBtn", "./assets/img/game/controls/rightCtrl.png");
+      this.load.image("topBtn", "./assets/img/game/controls/topCtrl.png");
+      this.load.image("bottomBtn", "./assets/img/game/controls/bottomCtrl.png");
       this.load.image("terrain", "./assets/tilesetMap.png");
       this.load.tilemapTiledJSON("map", "./assets/map.json");
       this.textures.spritesheet = this.load.spritesheet("reaper", "./assets/img/game/player.png", {
@@ -441,6 +476,8 @@ function (_Phaser$Scene) {
   }, {
     key: "create",
     value: function create() {
+      var _this = this;
+
       this.reaper = new Player(this, 250, 300, "reaper", this); // this.boomSlime = new Slime(this, 10, 50, "boomSlime", this.reaper, 40)
 
       this.physicsGroup = this.physics.add.group({
@@ -459,6 +496,26 @@ function (_Phaser$Scene) {
       this.physics.add.collider(this.reaper, this.layer);
       this.layer.setCollisionByProperty({
         collides: true
+      }); // UserInputs
+
+      var controls = [{
+        controlName: "left",
+        input: this.add.image(this.game.renderer.width * .10, this.game.renderer.height * .90, "rightBtn")
+      }, {
+        controlName: "right",
+        input: this.add.image(this.game.renderer.width * .30, this.game.renderer.height * .90, "leftBtn")
+      }, {
+        controlName: "top",
+        input: this.add.image(this.game.renderer.width * .20, this.game.renderer.height * .85, "topBtn")
+      }, {
+        controlName: "bottom",
+        input: this.add.image(this.game.renderer.width * .20, this.game.renderer.height * .95, "bottomBtn")
+      }];
+      controls.forEach(function (control) {
+        control.input.setInteractive();
+        control.input.on('pointerdown', function () {
+          _this.InputManagerBind.handleUpdate(_this.reaper, true, control.controlName);
+        });
       });
     }
   }, {
@@ -479,7 +536,7 @@ function (_Phaser$Physics$Arcad) {
   _inherits(Player, _Phaser$Physics$Arcad);
 
   function Player(scene) {
-    var _this;
+    var _this2;
 
     var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
@@ -488,18 +545,18 @@ function (_Phaser$Physics$Arcad) {
 
     _classCallCheck(this, Player);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, scene, x, y, texture));
-    _this.velocity = {
+    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, scene, x, y, texture));
+    _this2.velocity = {
       x: 0,
       y: 0
     };
-    _this.texture = texture;
-    _this.currentScene = currentScene;
-    scene.add.existing(_assertThisInitialized(_this));
-    scene.physics.add.existing(_assertThisInitialized(_this));
-    scene.events.on('create', _this.create, _assertThisInitialized(_this));
-    scene.events.on('update', _this.update, _assertThisInitialized(_this));
-    return _this;
+    _this2.texture = texture;
+    _this2.currentScene = currentScene;
+    scene.add.existing(_assertThisInitialized(_this2));
+    scene.physics.add.existing(_assertThisInitialized(_this2));
+    scene.events.on('create', _this2.create, _assertThisInitialized(_this2));
+    scene.events.on('update', _this2.update, _assertThisInitialized(_this2));
+    return _this2;
   }
 
   _createClass(Player, [{
@@ -565,7 +622,7 @@ function (_Phaser$Physics$Arcad2) {
   _inherits(Slime, _Phaser$Physics$Arcad2);
 
   function Slime(scene) {
-    var _this2;
+    var _this3;
 
     var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
@@ -575,13 +632,13 @@ function (_Phaser$Physics$Arcad2) {
 
     _classCallCheck(this, Slime);
 
-    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(Slime).call(this, scene, x, y, texture, target, speed));
-    _this2.target = target;
-    _this2.speed = speed;
-    scene.add.existing(_assertThisInitialized(_this2));
-    scene.physics.add.existing(_assertThisInitialized(_this2));
-    scene.events.on('update', _this2.update, _assertThisInitialized(_this2));
-    return _this2;
+    _this3 = _possibleConstructorReturn(this, _getPrototypeOf(Slime).call(this, scene, x, y, texture, target, speed));
+    _this3.target = target;
+    _this3.speed = speed;
+    scene.add.existing(_assertThisInitialized(_this3));
+    scene.physics.add.existing(_assertThisInitialized(_this3));
+    scene.events.on('update', _this3.update, _assertThisInitialized(_this3));
+    return _this3;
   }
 
   _createClass(Slime, [{
